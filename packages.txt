@@ -1,0 +1,11 @@
+# 系统级依赖（魔搭构建镜像会自动 apt-get install 本文件）
+# ffmpeg 开发库：保证 av/视频编码相关包无论如何都能装上、跑起来
+pkg-config
+ffmpeg
+libavformat-dev
+libavcodec-dev
+libavutil-dev
+libavdevice-dev
+libavfilter-dev
+libswscale-dev
+libswresample-dev

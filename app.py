@@ -1077,6 +1077,11 @@ with gr.Blocks(css=CSS, title="MiniMax H3 视频生成（AMD MI300X 适配）") 
 
 if __name__ == "__main__":
     threading.Thread(target=setup_worker, daemon=True).start()
-    demo.queue(concurrency_count=2)
+    try:
+        # 并发限 1：大模型推理场景串行排队，避免两个任务同时打满 192G 显存
+        demo.queue(default_concurrency_limit=1)
+    except TypeError:
+        # 兼容旧版 Gradio（无 default_concurrency_limit 参数）
+        demo.queue()
     port = int(os.environ.get("GRADIO_SERVER_PORT", os.environ.get("PORT", "7860")))
     demo.launch(server_name="0.0.0.0", server_port=port)
