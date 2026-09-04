@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+outputs/*
+!outputs/.gitkeep
+logs/
+# 模型绝不入库
+ComfyUI/models/
+*.safetensors
+.ipynb_checkpoints/

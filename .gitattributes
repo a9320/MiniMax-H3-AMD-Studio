@@ -1,0 +1,12 @@
+# 统一换行符，防止 Windows 端提交 CRLF 导致 Linux 脚本无法执行
+* text=auto eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.modelscope text eol=lf
+*.safetensors binary
+*.mp4 binary
+*.png binary
+*.jpg binary
