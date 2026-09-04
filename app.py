@@ -395,11 +395,10 @@ def ensure_comfyui():
 
     log("未找到 ComfyUI 源码，尝试从多个镜像源浅克隆……")
 
-    # 多镜像源支持（包括国内镜像）
+    # 多镜像源支持（实测可用的加速镜像优先）
     mirrors = [
+        ("https://gh-proxy.com/https://github.com/Comfy-Org/ComfyUI.git", "GitHub加速镜像"),
         ("https://github.com/Comfy-Org/ComfyUI.git", "GitHub官方源"),
-        ("https://gitee.com/mirrors/ComfyUI.git", "Gitee镜像源"),
-        ("https://ghproxy.com/https://github.com/Comfy-Org/ComfyUI.git", "GitHub代理源"),
     ]
 
     for mirror, mirror_name in mirrors:
@@ -752,7 +751,6 @@ def find_newest_video(started_at, prompt_id):
     return local
 
 
-@track_performance
 def generate(prompt, resolution, duration, turbo, seed, status_box):
     """视频生成函数，包含输入验证、错误处理和性能监控。"""
     try:
@@ -1005,10 +1003,12 @@ with gr.Blocks(css=CSS, title="MiniMax H3 视频生成（AMD MI300X 适配）") 
             # 资源清理按钮
             with gr.Accordion("🔧 高级选项", open=False):
                 cleanup_btn = gr.Button("🧹 清理GPU资源", variant="secondary")
-                cleanup_btn.click(
-                    fn=lambda: [cleanup_gpu_resources(), refresh_status()],
-                    outputs=[status_box]
-                )
+
+                def manual_cleanup():
+                    cleanup_gpu_resources()
+                    return refresh_status()
+
+                cleanup_btn.click(fn=manual_cleanup, outputs=status_box)
 
         with gr.Column(scale=1):
             # 视频输出区域
@@ -1037,6 +1037,7 @@ with gr.Blocks(css=CSS, title="MiniMax H3 视频生成（AMD MI300X 适配）") 
                     lines=10,
                     interactive=False
                 )
+            log_timer = gr.Timer(10)
 
     # 事件绑定
     timer.tick(fn=refresh_status, outputs=status_box)
@@ -1058,7 +1059,8 @@ with gr.Blocks(css=CSS, title="MiniMax H3 视频生成（AMD MI300X 适配）") 
         outputs=[video_out, status_box]
     )
 
-    # 日志更新（简单实现）
+    # ==========
+    # 日志更新：与状态栏相同的 Timer 轮询机制，跨 Gradio 版本稳定可靠
     def update_log_display():
         try:
             log_file = os.path.join(BASE_DIR, "logs", "studio.log")
@@ -1070,11 +1072,11 @@ with gr.Blocks(css=CSS, title="MiniMax H3 视频生成（AMD MI300X 适配）") 
             pass
         return "日志文件不可用"
 
-    # 定期更新日志显示
-    demo.load(fn=update_log_display, outputs=log_output, every=10)
+    log_timer.tick(fn=update_log_display, outputs=log_output)
 
 
 if __name__ == "__main__":
     threading.Thread(target=setup_worker, daemon=True).start()
     demo.queue(concurrency_count=2)
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    port = int(os.environ.get("GRADIO_SERVER_PORT", os.environ.get("PORT", "7860")))
+    demo.launch(server_name="0.0.0.0", server_port=port)
