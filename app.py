@@ -321,13 +321,8 @@ class NetworkError(StudioError):
         )
 
 
-def log(msg: str):
-    line = f"[{datetime.now().strftime('%H:%M:%S')}] {msg}"
-    print(line, flush=True)
-    STATE["detail"] = msg
-
-
 # ------------------------------------------------------------ 环境自检 ----
+# 注意：log() 统一使用上方带 level 参数的定义，此处不再重复定义覆盖它
 def detect_gpu():
     """返回 'rocm' / 'cuda' / 'cpu'。对应文章第二节的环境验证。"""
     try:
@@ -926,7 +921,7 @@ footer {display: none !important;}
 .example-btn {min-height: 40px !important;}
 """
 
-with gr.Blocks(css=CSS, title="MiniMax H3 视频生成（AMD MI300X 适配）") as demo:
+with gr.Blocks(title="MiniMax H3 视频生成（AMD MI300X 适配）") as demo:
     gr.Markdown(
         "# 🎬 MiniMax H3 文生视频 · AMD MI300X 适配版\n"
         "基于 ComfyUI 官方 MiniMax H3 模板，生成**带原生立体声**的视频。\n"
@@ -1084,4 +1079,8 @@ if __name__ == "__main__":
         # 兼容旧版 Gradio（无 default_concurrency_limit 参数）
         demo.queue()
     port = int(os.environ.get("GRADIO_SERVER_PORT", os.environ.get("PORT", "7860")))
-    demo.launch(server_name="0.0.0.0", server_port=port)
+    try:
+        # Gradio 6 起 css 从 Blocks 构造器移到 launch()
+        demo.launch(server_name="0.0.0.0", server_port=port, css=CSS)
+    except TypeError:
+        demo.launch(server_name="0.0.0.0", server_port=port)
